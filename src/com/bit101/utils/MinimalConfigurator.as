@@ -45,6 +45,7 @@ package com.bit101.utils
 	{
 		protected var loader:URLLoader;
 		protected var parent:DisplayObjectContainer;
+		protected var temporaryContainer:DisplayObjectContainer;
 		protected var idMap:Object;
 		
 		/**
@@ -61,8 +62,9 @@ package com.bit101.utils
 		 * Loads an xml file from the specified url and attempts to parse it as a layout format for this class.
 		 * @param url The location of the xml file.
 		 */
-		public function loadXML(url:String):void
+		public function loadXML(url:String, pTempContainer:DisplayObjectContainer=null):void
 		{
+			temporaryContainer = pTempContainer || parent;
 			loader = new URLLoader();
 			loader.addEventListener(Event.COMPLETE, onLoadComplete);
 			loader.load(new URLRequest(url));
@@ -73,19 +75,20 @@ package com.bit101.utils
 		 */
 		private function onLoadComplete(event:Event):void
 		{
-			parseXMLString(loader.data as String);
+			parseXMLString(loader.data as String, temporaryContainer);
+			temporaryContainer = null;
 		}
 		
 		/**
 		 * Parses a string as xml.
 		 * @param string The xml string to parse.
 		 */ 
-		public function parseXMLString(string:String):void
+		public function parseXMLString(string:String, pTemporaryContainer:DisplayObjectContainer=null):void
 		{
 			try
 			{
 				var xml:XML = new XML(string);
-				parseXML(xml);
+				parseXML(xml, pTemporaryContainer);
 			}
 			catch(e:Error)
 			{
@@ -98,8 +101,10 @@ package com.bit101.utils
 		 * Parses xml and creates componetns based on it.
 		 * @param xml The xml to parse.
 		 */
-		public function parseXML(xml:XML):void
+		public function parseXML(xml:XML, pContainer:DisplayObjectContainer=null):void
 		{
+			if (!pContainer) pContainer = parent;
+			
 			// root tag should contain one or more component tags
 			// each tag's name should be the base name of a component, i.e. "PushButton"
 			// package is assumed "com.bit101.components"
@@ -109,7 +114,7 @@ package com.bit101.utils
 				var compInst:Component = parseComp(comp);
 				if(compInst != null)
 				{
-					parent.addChild(compInst);
+					pContainer.addChild(compInst);
 				}
 			}
 		}
@@ -125,7 +130,16 @@ package com.bit101.utils
 			var specialProps:Object = {};
 			try
 			{
-				var classRef:Class = getDefinitionByName("com.bit101.components." + xml.name()) as Class;
+				// = getDefinitionByName("com.bit101.components." + xml.name()) as Class;
+				var className:String = xml.name(),
+					classRef:Class;
+				
+				if (className.indexOf(".") > -1){
+					classRef = getDefinitionByName(className) as Class;
+				} else {
+					classRef = getDefinitionByName("com.bit101.components." + className) as Class;
+				}
+				
 				compInst = new classRef();
 				
 				// id is special case, maps to name as well.
