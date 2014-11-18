@@ -43,18 +43,23 @@ package com.bit101.utils
 	 */
 	public class MinimalConfigurator extends EventDispatcher
 	{
+		public static const SPECIAL_PROPS:Array = ["value", "lowValue", "highValue", "choice"];
 		protected var loader:URLLoader;
 		protected var parent:DisplayObjectContainer;
+		protected var dispatcher:EventDispatcher;
 		protected var idMap:Object;
+		protected var listenerMap:Array;
 		
 		/**
 		 * Constructor.
 		 * @param parent The display object container on which to create components and look for ids and event handlers.
 		 */
-		public function MinimalConfigurator(parent:DisplayObjectContainer)
+		public function MinimalConfigurator(parent:DisplayObjectContainer, dispatcher:EventDispatcher=null)
 		{
 			this.parent = parent;
+			this.dispatcher = dispatcher || parent;
 			idMap = new Object();
+			listenerMap = [];
 		}
 		
 		/**
@@ -73,6 +78,7 @@ package com.bit101.utils
 		 */
 		private function onLoadComplete(event:Event):void
 		{
+			loader.removeEventListener(Event.COMPLETE, onLoadComplete);
 			parseXMLString(loader.data as String);
 		}
 		
@@ -136,9 +142,9 @@ package com.bit101.utils
 					idMap[id] = compInst;
 					
 					// if id exists on parent as a public property, assign this component to it.
-					if(parent.hasOwnProperty(id))
+					if(dispatcher.hasOwnProperty(id))
 					{
-						parent[id] = compInst;
+						dispatcher[id] = compInst;
 					}
 				}
 				
@@ -150,10 +156,11 @@ package com.bit101.utils
 					var parts:Array = xml.@event.split(":");
 					var eventName:String = trim(parts[0]);
 					var handler:String = trim(parts[1]);
-					if(parent.hasOwnProperty(handler))
+					if(dispatcher.hasOwnProperty(handler))
 					{
 						// if event handler exists on parent as a public method, assign it as a handler for the event.
-						compInst.addEventListener(eventName, parent[handler]);
+						compInst.addEventListener(eventName, dispatcher[handler]);
+						listenerMap.push( { comp: compInst, eventName: eventName, handler: dispatcher[handler] } );
 					}
 				}
 				
@@ -170,7 +177,7 @@ package com.bit101.utils
 							compInst[prop] = attrib == "true";
 						}
 						// special handling - these values should be set last.
-						else if(prop == "value" || prop == "lowValue" || prop == "highValue" || prop == "choice")
+						else if(SPECIAL_PROPS.indexOf(prop) > -1)
 						{
 							specialProps[prop] = attrib;
 						}
@@ -205,13 +212,63 @@ package com.bit101.utils
 		}
 		
 		/**
-		 * Returns the componet with the given id, if it exists.
+		 * Returns the component with the given id, if it exists.
 		 * @param id The id of the component you want.
 		 * @return The component with that id, if it exists.
 		 */
 		public function getCompById(id:String):Component
 		{
 			return idMap[id];
+		}
+		
+		/**
+		 * Returns a list of Component IDs identified by this configurator.
+		 * Useful for saving / restoring settings on all known components.
+		 * @return
+		 */
+		public function getCompIds():Array {
+			var results:Array = [];
+			for (var id in idMap) {
+				results[results.length] = id;
+			}
+			return results;
+		}
+		
+		/**
+		 * Returns a list of all Components identified by this configurator.
+		 * Similar usage as 'getCompIds()'.
+		 * @return
+		 */
+		public function getCompsIdentified():Array {
+			var results:Array = [];
+			for (var id in idMap) {
+				results[results.length] = idMap[id];
+			}
+			return results;
+		}
+		
+		public function getValues():Object {
+			var results:Object = { };
+			
+			for (var id in idMap) {
+				var comp:Component = idMap[id];
+				var childResults:Object = results[id] = { };
+				for each(var prop:String in SPECIAL_PROPS) {
+					if (!(prop in comp)) continue;
+					childResults[prop] = comp[prop];
+				}
+			}
+			
+			return results;
+		}
+		
+		public function removeAllEvents():void {
+			for (var e:int = listenerMap.length; --e >= 0; ) {
+				var listener:Object = listenerMap[e];
+				Component(listener.comp).removeEventListener(listener.eventName, listener.handler);
+			}
+			
+			listenerMap.length = 0;
 		}
 		
 		/**
