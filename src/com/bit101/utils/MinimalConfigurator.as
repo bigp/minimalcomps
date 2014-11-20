@@ -43,7 +43,8 @@ package com.bit101.utils
 	 */
 	public class MinimalConfigurator extends EventDispatcher
 	{
-		public static const SPECIAL_PROPS:Array = ["value", "lowValue", "highValue", "choice"];
+		public static const SPECIAL_PROPS:Array = ["text", "value", "lowValue", "highValue", "choice", "checked", "selected", "selectedIndex"];
+		public static const TYPES_OF_NO_VALUE:Array = [PushButton, VBox, HBox, Panel, Window, Label];
 		protected var loader:URLLoader;
 		protected var parent:DisplayObjectContainer;
 		protected var dispatcher:EventDispatcher;
@@ -228,7 +229,7 @@ package com.bit101.utils
 		 */
 		public function getCompIds():Array {
 			var results:Array = [];
-			for (var id in idMap) {
+			for (var id:String in idMap) {
 				results[results.length] = id;
 			}
 			return results;
@@ -241,7 +242,7 @@ package com.bit101.utils
 		 */
 		public function getCompsIdentified():Array {
 			var results:Array = [];
-			for (var id in idMap) {
+			for (var id:String in idMap) {
 				results[results.length] = idMap[id];
 			}
 			return results;
@@ -250,8 +251,10 @@ package com.bit101.utils
 		public function getValues():Object {
 			var results:Object = { };
 			
-			for (var id in idMap) {
+			for (var id:String in idMap) {
 				var comp:Component = idMap[id];
+				if (isOfType(comp, TYPES_OF_NO_VALUE)) continue;
+				
 				var childResults:Object = results[id] = { };
 				for each(var prop:String in SPECIAL_PROPS) {
 					if (!(prop in comp)) continue;
@@ -260,6 +263,14 @@ package com.bit101.utils
 			}
 			
 			return results;
+		}
+		
+		private static function isOfType(inst:Object, classes:Array):Boolean {
+			for (var c:int = classes.length; --c >= 0; ) {
+				var clazz:Class = classes[c];
+				if (inst is clazz) return true;
+			}
+			return false;
 		}
 		
 		public function removeAllEvents():void {

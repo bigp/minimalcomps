@@ -5,7 +5,7 @@
   <FlexIncludeASI>false</FlexIncludeASI>
   <MakeCS3>false</MakeCS3>
   <MakeMXI>false</MakeMXI>
-  <IntegrateAsDoc>true</IntegrateAsDoc>
+  <IntegrateAsDoc>false</IntegrateAsDoc>
   <AppendPaths>true</AppendPaths>
   <LaunchAEM>false</LaunchAEM>
   <MXIVersion />
