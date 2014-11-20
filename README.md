@@ -1,7 +1,9 @@
-# MinimalComps (forked by Pierre Chamberlain [bigp])
+# MinimalComps
+## (forked by Pierre Chamberlain [bigp])
 
 This alternate version of MinimalComps is mostly for my own personal use, but feel free to
 use it if you find some of the added feature useful!
+
 ![Smiley](https://raw.githubusercontent.com/bigp/minimalcomps/master/readme_assets/smiley-small.jpg)
 
 ### Minimal ActionScript 3.0 UI Components for Flash
