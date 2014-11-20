@@ -227,9 +227,12 @@ package com.bit101.utils
 		 * Useful for saving / restoring settings on all known components.
 		 * @return
 		 */
-		public function getCompIds():Array {
+		public function getCompIds(includeAllTypes:Boolean=false):Array {
 			var results:Array = [];
 			for (var id:String in idMap) {
+				if (!includeAllTypes && isOfType(idMap[id], TYPES_OF_NO_VALUE)) {
+					continue;
+				}
 				results[results.length] = id;
 			}
 			return results;
@@ -240,20 +243,26 @@ package com.bit101.utils
 		 * Similar usage as 'getCompIds()'.
 		 * @return
 		 */
-		public function getCompsIdentified():Array {
+		public function getCompsIdentified(includeAllTypes:Boolean=false):Array {
 			var results:Array = [];
 			for (var id:String in idMap) {
-				results[results.length] = idMap[id];
+				var comp:Component = idMap[id];
+				if (!includeAllTypes && isOfType(comp, TYPES_OF_NO_VALUE)) {
+					continue;
+				}
+				results[results.length] = comp;
 			}
 			return results;
 		}
 		
-		public function getValues():Object {
+		public function getValues(includeAllTypes:Boolean=false):Object {
 			var results:Object = { };
 			
 			for (var id:String in idMap) {
 				var comp:Component = idMap[id];
-				if (isOfType(comp, TYPES_OF_NO_VALUE)) continue;
+				if (!includeAllTypes && isOfType(comp, TYPES_OF_NO_VALUE)) {
+					continue;
+				}
 				
 				var childResults:Object = results[id] = { };
 				for each(var prop:String in SPECIAL_PROPS) {
