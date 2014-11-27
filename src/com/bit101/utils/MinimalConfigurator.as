@@ -30,6 +30,7 @@ package com.bit101.utils
 {
 	// usually don't use * but we really are importing everything here.
 	import com.bit101.components.*;
+	import flash.events.IEventDispatcher;
 	
 	import flash.display.DisplayObjectContainer;
 	import flash.events.Event;
@@ -47,6 +48,7 @@ package com.bit101.utils
 		protected var parent:DisplayObjectContainer;
 		protected var temporaryContainer:DisplayObjectContainer;
 		protected var idMap:Object;
+		protected var _eventsRegistered:Array;
 		
 		/**
 		 * Constructor.
@@ -55,7 +57,21 @@ package com.bit101.utils
 		public function MinimalConfigurator(parent:DisplayObjectContainer)
 		{
 			this.parent = parent;
+			_eventsRegistered = [];
 			idMap = new Object();
+		}
+		
+		public function dispose():void {
+			if(parent.numChildren > 0) {
+				parent.removeChildren();
+			}
+			parent = null;
+			
+			for (var r:int = _eventsRegistered.length; --r >= 0; ) {
+				var e:Object = _eventsRegistered[r];
+				IEventDispatcher(e.target).removeEventListener(e.name, e.func);
+			}
+			_eventsRegistered.length = 0;
 		}
 		
 		/**
@@ -75,6 +91,7 @@ package com.bit101.utils
 		 */
 		private function onLoadComplete(event:Event):void
 		{
+			loader.removeEventListener(Event.COMPLETE, onLoadComplete);
 			parseXMLString(loader.data as String, temporaryContainer);
 			temporaryContainer = null;
 		}
@@ -167,7 +184,9 @@ package com.bit101.utils
 					if(parent.hasOwnProperty(handler))
 					{
 						// if event handler exists on parent as a public method, assign it as a handler for the event.
-						compInst.addEventListener(eventName, parent[handler]);
+						var func:Function = parent[handler];
+						compInst.addEventListener(eventName, func);
+						_eventsRegistered[_eventsRegistered.length] = { target: compInst, name: eventName, func: func };
 					}
 				}
 				
