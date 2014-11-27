@@ -51,10 +51,10 @@ package com.bit101.components
 		
 		// Flex 4.7 (labs/beta) sdk:
 		// SWF generated with fontswf utility bundled with the AIR SDK released on labs.adobe.com with Flash Builder 4.7 (including ASC 2.0) 
-		[Embed(source="../../../assets/pf_ronda_seven.swf#PF Ronda Seven")]
-		
+		//[Embed(source="../../../../assets/pf_ronda_seven.swf@PF Ronda Seven")]
+
 		// Flex 4.x sdk:
-		// [Embed(source="/assets/pf_ronda_seven.ttf", embedAsCFF="false", fontName="PF Ronda Seven", mimeType="application/x-font")]
+		 [Embed(source="/assets/pf_ronda_seven.ttf", embedAsCFF="false", fontName="PF Ronda Seven", mimeType="application/x-font")]
 		// Flex 3.x sdk:
 //		[Embed(source="/assets/pf_ronda_seven.ttf", fontName="PF Ronda Seven", mimeType="application/x-font")]
 		protected var Ronda:Class;
@@ -63,6 +63,7 @@ package com.bit101.components
 		protected var _height:Number = 0;
 		protected var _tag:int = -1;
 		protected var _enabled:Boolean = true;
+		public var id:String;
 		
 		public static const DRAW:String = "draw";
 
@@ -224,6 +225,7 @@ package com.bit101.components
 		{
 			_tag = value;
 		}
+		
 		public function get tag():int
 		{
 			return _tag;

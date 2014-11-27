@@ -34,6 +34,7 @@ package com.bit101.components
 	{
 		public static var TEXT_BACKGROUND:uint = 0xFFFFFF;
 		public static var BACKGROUND:uint = 0xCCCCCC;
+		public static var CHECKBOX_SELECTED:uint = 0xFFFFFF;
 		public static var BUTTON_FACE:uint = 0xFFFFFF;
 		public static var BUTTON_DOWN:uint = 0xEEEEEE;
 		public static var INPUT_TEXT:uint = 0x333333;
@@ -62,6 +63,7 @@ package com.bit101.components
 			{
 				case DARK:
 					Style.BACKGROUND = 0x444444;
+					Style.CHECKBOX_SELECTED = 0x666666;
 					Style.BUTTON_FACE = 0x666666;
 					Style.BUTTON_DOWN = 0x222222;
 					Style.INPUT_TEXT = 0xBBBBBB;
@@ -77,6 +79,7 @@ package com.bit101.components
 				case LIGHT:
 				default:
 					Style.BACKGROUND = 0xCCCCCC;
+					Style.CHECKBOX_SELECTED = 0xFFFFFF;
 					Style.BUTTON_FACE = 0xFFFFFF;
 					Style.BUTTON_DOWN = 0xEEEEEE;
 					Style.INPUT_TEXT = 0x333333;

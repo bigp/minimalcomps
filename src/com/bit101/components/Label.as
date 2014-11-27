@@ -30,6 +30,8 @@ package com.bit101.components
 {
 	import flash.display.DisplayObjectContainer;
 	import flash.events.Event;
+	import flash.text.AntiAliasType;
+	import flash.text.GridFitType;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
@@ -75,7 +77,10 @@ package com.bit101.components
 			_tf.embedFonts = Style.embedFonts;
 			_tf.selectable = false;
 			_tf.mouseEnabled = false;
-			_tf.defaultTextFormat = new TextFormat(Style.fontName, Style.fontSize, Style.LABEL_TEXT);
+			//_tf.antiAliasType = AntiAliasType.ADVANCED;
+			//_tf.gridFitType = GridFitType.SUBPIXEL;
+			var format:TextFormat = new TextFormat(Style.fontName, Style.fontSize, Style.LABEL_TEXT);
+			_tf.defaultTextFormat = format;
 			_tf.text = _text;			
 			addChild(_tf);
 			draw();

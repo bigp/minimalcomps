@@ -30,7 +30,6 @@ package com.bit101.utils
 {
 	// usually don't use * but we really are importing everything here.
 	import com.bit101.components.*;
-	import flash.events.IEventDispatcher;
 	
 	import flash.display.DisplayObjectContainer;
 	import flash.events.Event;
@@ -44,43 +43,32 @@ package com.bit101.utils
 	 */
 	public class MinimalConfigurator extends EventDispatcher
 	{
+		public static const SPECIAL_PROPS:Array = ["text", "value", "lowValue", "highValue", "choice", "checked", "selected", "selectedIndex"];
+		public static const TYPES_OF_NO_VALUE:Array = [PushButton, VBox, HBox, Panel, Window, Label];
 		protected var loader:URLLoader;
 		protected var parent:DisplayObjectContainer;
-		protected var temporaryContainer:DisplayObjectContainer;
+		protected var dispatcher:EventDispatcher;
 		protected var idMap:Object;
-		protected var _eventsRegistered:Array;
+		protected var listenerMap:Array;
 		
 		/**
 		 * Constructor.
 		 * @param parent The display object container on which to create components and look for ids and event handlers.
 		 */
-		public function MinimalConfigurator(parent:DisplayObjectContainer)
+		public function MinimalConfigurator(parent:DisplayObjectContainer, dispatcher:EventDispatcher=null)
 		{
 			this.parent = parent;
-			_eventsRegistered = [];
+			this.dispatcher = dispatcher || parent;
 			idMap = new Object();
-		}
-		
-		public function dispose():void {
-			if(parent.numChildren > 0) {
-				parent.removeChildren();
-			}
-			parent = null;
-			
-			for (var r:int = _eventsRegistered.length; --r >= 0; ) {
-				var e:Object = _eventsRegistered[r];
-				IEventDispatcher(e.target).removeEventListener(e.name, e.func);
-			}
-			_eventsRegistered.length = 0;
+			listenerMap = [];
 		}
 		
 		/**
 		 * Loads an xml file from the specified url and attempts to parse it as a layout format for this class.
 		 * @param url The location of the xml file.
 		 */
-		public function loadXML(url:String, pTempContainer:DisplayObjectContainer=null):void
+		public function loadXML(url:String):void
 		{
-			temporaryContainer = pTempContainer || parent;
 			loader = new URLLoader();
 			loader.addEventListener(Event.COMPLETE, onLoadComplete);
 			loader.load(new URLRequest(url));
@@ -92,20 +80,19 @@ package com.bit101.utils
 		private function onLoadComplete(event:Event):void
 		{
 			loader.removeEventListener(Event.COMPLETE, onLoadComplete);
-			parseXMLString(loader.data as String, temporaryContainer);
-			temporaryContainer = null;
+			parseXMLString(loader.data as String);
 		}
 		
 		/**
 		 * Parses a string as xml.
 		 * @param string The xml string to parse.
 		 */ 
-		public function parseXMLString(string:String, pTemporaryContainer:DisplayObjectContainer=null):void
+		public function parseXMLString(string:String):void
 		{
 			try
 			{
 				var xml:XML = new XML(string);
-				parseXML(xml, pTemporaryContainer);
+				parseXML(xml);
 			}
 			catch(e:Error)
 			{
@@ -118,10 +105,8 @@ package com.bit101.utils
 		 * Parses xml and creates componetns based on it.
 		 * @param xml The xml to parse.
 		 */
-		public function parseXML(xml:XML, pContainer:DisplayObjectContainer=null):void
+		public function parseXML(xml:XML):void
 		{
-			if (!pContainer) pContainer = parent;
-			
 			// root tag should contain one or more component tags
 			// each tag's name should be the base name of a component, i.e. "PushButton"
 			// package is assumed "com.bit101.components"
@@ -131,7 +116,7 @@ package com.bit101.utils
 				var compInst:Component = parseComp(comp);
 				if(compInst != null)
 				{
-					pContainer.addChild(compInst);
+					parent.addChild(compInst);
 				}
 			}
 		}
@@ -147,16 +132,7 @@ package com.bit101.utils
 			var specialProps:Object = {};
 			try
 			{
-				// = getDefinitionByName("com.bit101.components." + xml.name()) as Class;
-				var className:String = xml.name(),
-					classRef:Class;
-				
-				if (className.indexOf(".") > -1){
-					classRef = getDefinitionByName(className) as Class;
-				} else {
-					classRef = getDefinitionByName("com.bit101.components." + className) as Class;
-				}
-				
+				var classRef:Class = getDefinitionByName("com.bit101.components." + xml.name()) as Class;
 				compInst = new classRef();
 				
 				// id is special case, maps to name as well.
@@ -167,9 +143,9 @@ package com.bit101.utils
 					idMap[id] = compInst;
 					
 					// if id exists on parent as a public property, assign this component to it.
-					if(parent.hasOwnProperty(id))
+					if(dispatcher.hasOwnProperty(id))
 					{
-						parent[id] = compInst;
+						dispatcher[id] = compInst;
 					}
 				}
 				
@@ -181,12 +157,11 @@ package com.bit101.utils
 					var parts:Array = xml.@event.split(":");
 					var eventName:String = trim(parts[0]);
 					var handler:String = trim(parts[1]);
-					if(parent.hasOwnProperty(handler))
+					if(dispatcher.hasOwnProperty(handler))
 					{
 						// if event handler exists on parent as a public method, assign it as a handler for the event.
-						var func:Function = parent[handler];
-						compInst.addEventListener(eventName, func);
-						_eventsRegistered[_eventsRegistered.length] = { target: compInst, name: eventName, func: func };
+						compInst.addEventListener(eventName, dispatcher[handler]);
+						listenerMap.push( { comp: compInst, eventName: eventName, handler: dispatcher[handler] } );
 					}
 				}
 				
@@ -203,7 +178,7 @@ package com.bit101.utils
 							compInst[prop] = attrib == "true";
 						}
 						// special handling - these values should be set last.
-						else if(prop == "value" || prop == "lowValue" || prop == "highValue" || prop == "choice")
+						else if(SPECIAL_PROPS.indexOf(prop) > -1)
 						{
 							specialProps[prop] = attrib;
 						}
@@ -238,13 +213,82 @@ package com.bit101.utils
 		}
 		
 		/**
-		 * Returns the componet with the given id, if it exists.
+		 * Returns the component with the given id, if it exists.
 		 * @param id The id of the component you want.
 		 * @return The component with that id, if it exists.
 		 */
 		public function getCompById(id:String):Component
 		{
 			return idMap[id];
+		}
+		
+		/**
+		 * Returns a list of Component IDs identified by this configurator.
+		 * Useful for saving / restoring settings on all known components.
+		 * @return
+		 */
+		public function getCompIds(includeAllTypes:Boolean=false):Array {
+			var results:Array = [];
+			for (var id:String in idMap) {
+				if (!includeAllTypes && isOfType(idMap[id], TYPES_OF_NO_VALUE)) {
+					continue;
+				}
+				results[results.length] = id;
+			}
+			return results;
+		}
+		
+		/**
+		 * Returns a list of all Components identified by this configurator.
+		 * Similar usage as 'getCompIds()'.
+		 * @return
+		 */
+		public function getCompsIdentified(includeAllTypes:Boolean=false):Array {
+			var results:Array = [];
+			for (var id:String in idMap) {
+				var comp:Component = idMap[id];
+				if (!includeAllTypes && isOfType(comp, TYPES_OF_NO_VALUE)) {
+					continue;
+				}
+				results[results.length] = comp;
+			}
+			return results;
+		}
+		
+		public function getValues(includeAllTypes:Boolean=false):Object {
+			var results:Object = { };
+			
+			for (var id:String in idMap) {
+				var comp:Component = idMap[id];
+				if (!includeAllTypes && isOfType(comp, TYPES_OF_NO_VALUE)) {
+					continue;
+				}
+				
+				var childResults:Object = results[id] = { };
+				for each(var prop:String in SPECIAL_PROPS) {
+					if (!(prop in comp)) continue;
+					childResults[prop] = comp[prop];
+				}
+			}
+			
+			return results;
+		}
+		
+		private static function isOfType(inst:Object, classes:Array):Boolean {
+			for (var c:int = classes.length; --c >= 0; ) {
+				var clazz:Class = classes[c];
+				if (inst is clazz) return true;
+			}
+			return false;
+		}
+		
+		public function removeAllEvents():void {
+			for (var e:int = listenerMap.length; --e >= 0; ) {
+				var listener:Object = listenerMap[e];
+				Component(listener.comp).removeEventListener(listener.eventName, listener.handler);
+			}
+			
+			listenerMap.length = 0;
 		}
 		
 		/**

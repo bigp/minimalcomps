@@ -31,6 +31,8 @@ package com.bit101.components
 	import flash.display.DisplayObjectContainer;
 	import flash.display.Sprite;
 	import flash.events.MouseEvent;
+	import flash.text.TextField;
+	import flash.text.TextFormat;
 
 	public class PushButton extends Component
 	{
@@ -42,6 +44,8 @@ package com.bit101.components
 		protected var _down:Boolean = false;
 		protected var _selected:Boolean = false;
 		protected var _toggle:Boolean = false;
+		protected var _multiline:Boolean = false;
+		protected var _alignment:String = "left";
 		
 		/**
 		 * Constructor
@@ -132,21 +136,23 @@ package com.bit101.components
 			
 			drawFace();
 			
+			var tf:TextField = _label.textField;
+			tf.multiline = _multiline;
+			tf.wordWrap = _multiline;
 			_label.text = _labelText;
 			_label.autoSize = true;
 			_label.draw();
 			if(_label.width > _width - 4)
 			{
-				_label.autoSize = false;
-				_label.width = _width - 4;
+				tf.width = _label.width = _width - 4;
+				//_label.autoSize = false;
 			}
 			else
 			{
-				_label.autoSize = true;
+				//_label.autoSize = true;
 			}
 			_label.draw();
-			_label.move(_width / 2 - _label.width / 2, _height / 2 - _label.height / 2);
-			
+			_label.move((_width-tf.width) / 2, (_height-tf.height) / 2);
 		}
 		
 		
@@ -254,6 +260,22 @@ package com.bit101.components
 			return _toggle;
 		}
 		
+		public function get multiline():Boolean { return _multiline; }
+		public function set multiline(value:Boolean):void {
+			_multiline = value;
+			
+			draw();
+		}
 		
+		public function get alignment():String { return _alignment; }
+		public function set alignment(value:String):void {
+			_alignment = value;
+			var tfield:TextField = _label.textField;
+			var tformat:TextFormat = tfield.getTextFormat();
+			tformat.align = _alignment;
+			tfield.setTextFormat(tformat);
+			tfield.defaultTextFormat = tformat;
+			//draw();
+		}
 	}
 }
