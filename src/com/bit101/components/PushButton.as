@@ -28,6 +28,7 @@
  
 package com.bit101.components
 {
+	import flash.display.DisplayObject;
 	import flash.display.DisplayObjectContainer;
 	import flash.display.Sprite;
 	import flash.events.MouseEvent;
@@ -46,6 +47,9 @@ package com.bit101.components
 		protected var _toggle:Boolean = false;
 		protected var _multiline:Boolean = false;
 		protected var _alignment:String = "left";
+		protected var _icon:DisplayObject;
+		public var iconOffsetX:int = 0;
+		public var iconOffsetY:int = 0;
 		
 		/**
 		 * Constructor
@@ -106,14 +110,12 @@ package com.bit101.components
 		protected function drawFace():void
 		{
 			_face.graphics.clear();
-			if(_down)
-			{
+			if(_down) {
 				_face.graphics.beginFill(Style.BUTTON_DOWN);
-			}
-			else
-			{
+			} else {
 				_face.graphics.beginFill(Style.BUTTON_FACE);
 			}
+			
 			_face.graphics.drawRect(0, 0, _width - 2, _height - 2);
 			_face.graphics.endFill();
 		}
@@ -129,9 +131,13 @@ package com.bit101.components
 		override public function draw():void
 		{
 			super.draw();
+			
+			var sizeW:int = _icon && _icon.width > _width ? _icon.width : _width;
+			var sizeH:int = _icon && _icon.height > _height ? _icon.height : _height;
+			
 			_back.graphics.clear();
 			_back.graphics.beginFill(Style.BACKGROUND);
-			_back.graphics.drawRect(0, 0, _width, _height);
+			_back.graphics.drawRect(0, 0, sizeW, sizeH);
 			_back.graphics.endFill();
 			
 			drawFace();
@@ -142,21 +148,24 @@ package com.bit101.components
 			_label.text = _labelText;
 			_label.autoSize = true;
 			_label.draw();
-			if(_label.width > _width - 4)
-			{
-				tf.width = _label.width = _width - 4;
+			
+			if(_label.width > sizeW - 4) {
+				tf.width = _label.width = sizeW - 4;
 				//_label.autoSize = false;
-			}
-			else
-			{
+			} else {
 				//_label.autoSize = true;
 			}
+			
 			_label.draw();
-			_label.move((_width-tf.width) / 2, (_height-tf.height) / 2);
+			_label.move((sizeW - tf.width) * .5, (sizeH - tf.height) * .5);
+			
+			if (_icon != null) {
+				_icon.x = iconOffsetX + Math.round((sizeW - (_label.width + _icon.width)) * .5);
+				_icon.y = iconOffsetY + Math.round((sizeH - _icon.height) * .5);
+				
+				_label.x = Math.round(_icon.x + _icon.width);
+			}
 		}
-		
-		
-		
 		
 		///////////////////////////////////
 		// event handlers
@@ -276,6 +285,18 @@ package com.bit101.components
 			tfield.setTextFormat(tformat);
 			tfield.defaultTextFormat = tformat;
 			//draw();
+		}
+		
+		public function get icon():DisplayObject { return _icon; }
+		public function set icon(value:DisplayObject):void {
+			if (_icon != null) {
+				removeChild(_icon);
+			}
+			_icon = value;
+			if (_icon != null) {
+				addChild(_icon);
+			}
+			draw();
 		}
 	}
 }

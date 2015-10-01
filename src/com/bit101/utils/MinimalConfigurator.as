@@ -153,16 +153,21 @@ package com.bit101.utils
 				// event is another special case
 				if(xml.@event.toString() != "")
 				{
-					// events are in the format: event="eventName:eventHandler"
-					// i.e. event="click:onClick"
-					var parts:Array = xml.@event.split(":");
-					var eventName:String = trim(parts[0]);
-					var handler:String = trim(parts[1]);
-					if(dispatcher.hasOwnProperty(handler))
-					{
-						// if event handler exists on parent as a public method, assign it as a handler for the event.
-						compInst.addEventListener(eventName, dispatcher[handler]);
-						listenerMap.push( { comp: compInst, eventName: eventName, handler: dispatcher[handler] } );
+					var events:Array = xml.@event.split(",");
+					for (var g:int = events.length; --g >= 0; ) {
+						var eventStr:String = events[g];
+						
+						// events are in the format: event="eventName:eventHandler"
+						// i.e. event="click:onClick"
+						var parts:Array = eventStr.split(":");
+						var eventName:String = trim(parts[0]);
+						var handler:String = trim(parts[1]);
+						if(dispatcher.hasOwnProperty(handler))
+						{
+							// if event handler exists on parent as a public method, assign it as a handler for the event.
+							compInst.addEventListener(eventName, dispatcher[handler]);
+							listenerMap.push( { comp: compInst, eventName: eventName, handler: dispatcher[handler] } );
+						}
 					}
 				}
 				
