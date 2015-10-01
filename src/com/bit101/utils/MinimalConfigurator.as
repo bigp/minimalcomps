@@ -134,6 +134,7 @@ package com.bit101.utils
 			{
 				var classRef:Class = getDefinitionByName("com.bit101.components." + xml.name()) as Class;
 				compInst = new classRef();
+				if ("dataXML" in compInst) compInst.dataXML = xml;
 				
 				// id is special case, maps to name as well.
 				var id:String = trim(xml.@id.toString()); 

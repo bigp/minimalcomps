@@ -64,6 +64,7 @@ package com.bit101.components
 		protected var _tag:int = -1;
 		protected var _enabled:Boolean = true;
 		public var id:String;
+		public var dataXML:XML;
 		
 		public static const DRAW:String = "draw";
 
